@@ -21,7 +21,7 @@ import { get_current_minting_policy_hash, tx } from ScriptContext
 
 const name = "PULSE"
 const token_name_suffix = name.encode_utf8()
-const seed: TxOutputId = TxOutputId::new(TxId::new(#6be04e38a692c28eb54c96b2f2187d03ff15fcf8dcee8b35c8a141d4cd61799e), 0)
+const seed: TxOutputId = TxOutputId::new(TxId::new(#e0e39be35ce65177a44086bb46734370c63a8aa2ffcf2e19e65ccd4e7dbf4dac), 0)
 const supply = 20_000_000_000_000
 const decimals = 6
 const mph = get_current_minting_policy_hash()
@@ -115,51 +115,53 @@ async function main() {
 
     console.log("Policy: ", mph.toHex())
     
-    const ticker = "PULSE"
-    const tokenName = hexToBytes("0014df10").concat(encodeUtf8(ticker))
-    const assetClass = makeAssetClass(mph, tokenName)
-    const metadataTokenName = hexToBytes("000643b0").concat(encodeUtf8(ticker))
-    const metadataAssetClass = makeAssetClass(mph, metadataTokenName)
-
-    const cardanoClient = makeBlockfrostV0Client("mainnet", blockfrostKey)
-    const wallet = makeSimpleWallet(restoreRootPrivateKey(walletPhrase.split(" ")), cardanoClient)
-    console.log("Wallet address: ", wallet.address.toBech32())
-    const utxos = await wallet.utxos
-    console.log("Wallet UTxOs:")
-    for (let utxo of utxos) {
-        console.log(utxo.dump())
-    }
-
-    const metadataDatum = makeConstrData(0, [
-        makeMapData([
-            [makeByteArrayData(encodeUtf8("name")), makeByteArrayData(encodeUtf8(ticker))],
-            [makeByteArrayData(encodeUtf8("description")), makeByteArrayData(encodeUtf8("PULSE Token"))],
-            [makeByteArrayData(encodeUtf8("decimals")), makeIntData(6)],
-            [makeByteArrayData(encodeUtf8("ticker")), makeByteArrayData(encodeUtf8(ticker))],
-            [makeByteArrayData(encodeUtf8("url")), makeByteArrayData(encodeUtf8("https://pulsecardano.org"))],
-            [makeByteArrayData(encodeUtf8("logo")), makeByteArrayData(encodeUtf8("https://pulsecardano.org/logo"))],
-        ]),
-        makeIntData(1n),
-        makeConstrData(0, [])
-    ])
-    
-
-    const b = makeTxBuilder({isMainnet: true})
-
-    b.attachUplcProgram(uplc)
-    b.mintPolicyTokensUnsafe(mph, [[tokenName, supply], [metadataTokenName, 1]], makeIntData(0))
-    b.payUnsafe(multisigAddress, makeValue(0n, [[assetClass, supply]]), makeInlineTxOutputDatum(makeIntData(0n)))
-    b.payUnsafe(multisigAddress, makeValue(0n, [[metadataAssetClass, 1]]), makeInlineTxOutputDatum(metadataDatum))
-
-    const tx = await b.build({
-        networkParams: cardanoClient.parameters,
-        spareUtxos: utxos,
-        changeAddress: wallet.address,
-    })
-
-    tx.addSignatures(await wallet.signTx(tx))
-
-    cardanoClient.submitTx(tx)
+    //const ticker = "PULSE"
+    //const tokenName = hexToBytes("0014df10").concat(encodeUtf8(ticker))
+    //const assetClass = makeAssetClass(mph, tokenName)
+    //const metadataTokenName = hexToBytes("000643b0").concat(encodeUtf8(ticker))
+    //const metadataAssetClass = makeAssetClass(mph, metadataTokenName)
+//
+    //const cardanoClient = makeBlockfrostV0Client("mainnet", blockfrostKey)
+    //const wallet = makeSimpleWallet(restoreRootPrivateKey(walletPhrase.split(" ")), cardanoClient)
+    //console.log("Wallet address: ", wallet.address.toBech32())
+    //const utxos = await wallet.utxos
+    //console.log("Wallet UTxOs:")
+    //for (let utxo of utxos) {
+    //    console.log(utxo.dump())
+    //}
+//
+    //const metadataDatum = makeConstrData(0, [
+    //    makeMapData([
+    //        [makeByteArrayData(encodeUtf8("name")), makeByteArrayData(encodeUtf8(ticker))],
+    //        [makeByteArrayData(encodeUtf8("description")), makeByteArrayData(encodeUtf8("PULSE Token"))],
+    //        [makeByteArrayData(encodeUtf8("decimals")), makeIntData(6)],
+    //        [makeByteArrayData(encodeUtf8("ticker")), makeByteArrayData(encodeUtf8(ticker))],
+    //        [makeByteArrayData(encodeUtf8("url")), makeByteArrayData(encodeUtf8("https://pulsecardano.org"))],
+    //        [makeByteArrayData(encodeUtf8("logo")), makeByteArrayData(encodeUtf8("https://pulsecardano.org/logo"))],
+    //    ]),
+    //    makeIntData(1n),
+    //    makeConstrData(0, [])
+    //])
+    //
+//
+    //const b = makeTxBuilder({isMainnet: true})
+//
+    //b.attachUplcProgram(uplc)
+    //b.mintPolicyTokensUnsafe(mph, [[tokenName, supply], [metadataTokenName, 1]], makeIntData(0))
+    //b.payUnsafe(multisigAddress, makeValue(0n, [[assetClass, supply]]), makeInlineTxOutputDatum(makeIntData(0n)))
+    //b.payUnsafe(multisigAddress, makeValue(0n, [[metadataAssetClass, 1]]), makeInlineTxOutputDatum(metadataDatum))
+//
+    //const tx = await b.build({
+    //    networkParams: cardanoClient.parameters,
+    //    spareUtxos: utxos,
+    //    changeAddress: wallet.address,
+    //})
+//
+    //tx.addSignatures(await wallet.signTx(tx))
+//
+    //const txId = await cardanoClient.submitTx(tx)
+//
+    //console.log(txId.toHex())
 }
 
 main()

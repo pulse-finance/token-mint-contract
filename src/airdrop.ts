@@ -1,0 +1,274 @@
+import { bytesToHex } from "@helios-lang/codec-utils"
+import { decodeNativeScript, makeAssetClass, makeMintingPolicyHash, makeShelleyAddress, makeTokenValue, makeTxOutputId, parseShelleyAddress, parseTxOutputId } from "@helios-lang/ledger"
+import { makeBlockfrostV0Client, makeTxBuilder } from "@helios-lang/tx-utils"
+
+import dotenv from "dotenv";
+
+dotenv.config()
+
+const recipients1: {address: string, amount: bigint}[] = [
+{address: "addr1q807gtddezu6zun2shkud3kw97vdywdvcv3my6wcqnswnlxdfhk0d2mse7l6grt6d2x4w5fh8v3fz0x8sq6x5d0zgq0s8e7c5c", amount:	518683076n},
+{address: "addr1q80anpdgvjsn9juwja48a0w2wxn364vuujk3vu7vhssd02fa6yyynsqzmzv4j4a5whkczwadl4fw38kn7rlvgnv6wpnqgcg04c", amount:	1049585550957n},
+{address: "addr1q823vy086qzgjs3jx5g5p8jt24c4rcez39sxtk0rwdm8znu5g9tamslqs8ynf9l3vhdv4f0ycx5dty3anxzv6q4hm77sz3egkj", amount:	91258558843n},
+{address: "addr1q82530ep8wftl8qapd20yqhqh0sj2mhd80yhy4crv0px306aavy77ufwd0lyz665clufr8fsnw7cm3n77ka6dj5qn2hsq5mxlj", amount:	1216892742n},
+{address: "addr1q82dcaqthrvkc3wrjrj53pvlarmcf4yc2ru2ayekcr7hmqwz4dc44ll2037qhaweewr3uuadtxm8qfkrsjmd0r2fdagsk6tf3a", amount:	1349233136n},
+{address: "addr1q82f8d5rmryhmv2qkcnjgsdsyt24e8wwh6t2z2gx5avh0qcz5ug9k0rljk8wu92g4t5ufwel0969kst30xydw9jg82hq7htucv", amount:	1951610102n},
+{address: "addr1q82nrgfuclyq0ahahddvdcn7a5awq8h8eygfujnquxqchnx6wayw4yv6rarm7j3zhznu7rskzyht9zg0htgc9c2ult4s755dwe", amount:	18243168968n},
+{address: "addr1q82tac5v6sl5p3u2jjrfejwt5nc06c4dsp2kxgsgdezccydveyrn0rx3wps0745x3y987rdlphj0s37u3jrdjs2smdcs0uwfhu", amount:	492843203158n},
+{address: "addr1q84cm9pgfr4stsrdxf67w0gdsd7ypmj2qwl2xcq76wk6tkyeut43dw2tp84a5nty68kssaaskeg0kc5ep9w0jv4du0tqjs7n2d", amount:	1130186966n},
+{address: "addr1q8555xgem2ajf3cjcpnhu9ytld658a5reqecmjx9w0q6p99rqd3njdzsc5dmlhrq6xnzcnaslvggkjjjvqps6at9004qca75rk", amount:	445667686n},
+{address: "addr1q85hjq76w93np4c5gtnppsxz6ghe3m0qep6gkss8qw8u37e4ahzmuma8fegvl95hftze2wkd9sx0j3j53jqcncy56c5q8decqt", amount:	445667686n},
+{address: "addr1q878tcqmejsf4026vpc39xp47xgrw0s6m97j7p27grw5dcn64tsdfjnlmsm9xky4xk63ule9ysyycxhefjy5vdnvutfsg08ucm", amount:	45623940171n},
+{address: "addr1q87y5jl79wc88meyxqy37hwzufaj9a54wmynp9mfdnqphry0sua27j236lkhaqve74jf7xep60v4du28ddj42u8qt7jszgp3ee", amount:	18243168968n},
+{address: "addr1q88jhcepk393ed5en06zet5rkjyktgv0tmcyquc2t0jmapn7wppcxw2ae37mcwvjuy0kn685ew3p9czp937arumjftvs2pa5xz", amount:	2271052433n},
+{address: "addr1q88x4wyfqpu5kp7y8drm94yn4ytkapernzg795fcte3gatzwgqgh3fdmr04ss2khvft6n493d79l2wgux5hacj0w086s5xwz2s", amount:	456757063n},
+{address: "addr1q8a5h4l44cwrjftfdzqrd9u46gnmtpw0gtedgfghlwuhqkq463l3j94t5rra24n3d945dpxyh6c3fd6q767hkjj4f0js9gkefn", amount:	31933554570n},
+{address: "addr1q8a82s3fvvxr3ahxxwxyjhue5lmqmp3k6hla0uuzuzhpttxn263z2k7r4uyaflq2shtflgdfuvvzhg3aukh8wf4nhpvq7ztu5r", amount:	3028587103n},
+{address: "addr1q8adf5txz2hwuy7cdlxcelk7ap7z4qzjngd5yjglkh26dyy9d3hamxfze587s23hdggtl56j7wrl6eu93jns6uxnm0vqz2flzc", amount:	62963269882n},
+{address: "addr1q8aryad7d5r8d900mpuw5cef3lpwtlds7xxpcye85u4pmu2qj5kunva28jhjc055h926gdqp8kjvn24uf7rkf7cncd0ss3ma7r", amount:	6834514300n},
+{address: "addr1q8cagr02kq4l992l586pvr83te5p70yn466yf2z7kp2j98evc9854xxtffwl2r2tsfsfqy2sf6gf46qr2s6wrjly435sm9cgyc", amount:	4552783366n},
+{address: "addr1q8ce06sgj888s656gx6ey4dlpmaxcta505xsh27la4azjnq28y0gxqgmt08acap4ax6sl0lk4z77h8n6mpcx77exw0ds4lqhdy", amount:	445667686n},
+{address: "addr1q8du848rjn9terfyty67m4dddja8wcex2jwyr5khj78v9yqum56ztr3wqd7j6wwdn3yq3mse62c9v3ffjjp357ywc45qjevu3a", amount:	383320118345n},
+{address: "addr1q8f0epde06an7mruzfh9q0yhj463vjvuexnhnpz0f64hun0qu9le5nmlpawh8prh0jvtlug9zkhnse9r3q2ld3pdy7ts40c6ep", amount:	5693648833n},
+{address: "addr1q8frm50lzwjqt7lg0xfczkphwy7spnklrj23wd55vpz8pkq67c3v2a8n4zjql0wxf567kdtfa2vgxylnrhp69m6u72yszn3rs0", amount:	6378168113n},
+{address: "addr1q8hvvshgw7dq9mtj5k2ymy8ts7dvzqfk9c4xzjjhmzcxf0p3u6krvlzkpcltz684fk55spnlrjv6anp0tyevtjkkdvfqnp4xfv", amount:	127766253781n},
+{address: "addr1q8hymd3jljdzld004464484ce63p67ugpd5z0x4qar5vta6xm97nhhptzlpufmslhjl3udyw5fssxvyks8lxlprh3rcq29nx0m", amount:	902013873n},
+{address: "addr1q8jh5x8ruxugaz0ke3h509m99e26wdej6uygh3slwlz66hd3mx6rpnj0un5x2t2e6xpdvvajhwv4c0tj67hz5p3lw9gsm7jnze", amount:	783363864n},
+{address: "addr1q8jyskkaer5sanu3885q2lgzyzuxmzts5fptp62uv286wet63t7avt907myc3epx22u72pefk6h0q0mgcja2xwdavz3q2dyldz", amount:	628206161n},
+{address: "addr1q8kh23yva0t6af07hpe9320f75yg6g588py3yyxxfxhgnfz8y3988mtcutjwm7vhnp6zwgzlzsjwd08j68048aay6m3sx8u5u6", amount:	18243168968n},
+{address: "addr1q8krz3tag9pltj2l6yewp0dxc35k6g9gpcvmgl7layrrec4vqpvl9jyc58xjpnn9d0r4d0f39x029cc0fj8ufucnvkhsyh7cks", amount:	4552783366n},
+{address: "addr1q8l4fpzfat8r7uekfgyffqx67wafjm95dwkuq5az5u8tx7casxk8d5ks7ned8a56r6njkmullga2zcyldjegp327um8s4p302h", amount:	1369027881661n},
+{address: "addr1q8lg3m00v5pwq0tjrwq0cxnhnfxc3a5vhhq2ckcjjs2cxehjuh82x2pasj6h3qp4s53nj0umhgs8xgsc2626t7vk7umsnsmd2l", amount:	765110017n},
+{address: "addr1q8mmte54qn2y03dweej8tn2jyg2d5th4q8ze5m5edyyu2mwhp2m6alxwqxhh03rmn3n9q7nvll3qqdameawkganujqgsc2pe4e", amount:	7290860487n},
+{address: "addr1q8nrqcne7tsah4cykfhucdjm7haw94h4k2uqpz6tl8605rvckhl0uapk33fw4gqjqzs6c0vuuvxgtxv33900vr4hmw8qhk8jxq", amount:	1358360059n},
+{address: "addr1q8nwlt6ukr087kumuk6w0e4zn9289en7k7mr830x855fffqn6t9mh8f5s7wc0rdj069l5f32nv4479cfufcd5h0xne2q5rspxm", amount:	4552783366n},
+{address: "addr1q8p40epf7vptpf8u375wn3d5nusy2prpj0qhtdc4uet9tqrvx5t22qrkacaf4ex5yqcsmu97xvs2rcz73c2nyd7t8glqe6h6el", amount:	1586533153n},
+{address: "addr1q8rm09ass62n97erkkmlymuz7wpk40wsl5z522zwuk64wy248zsmwkqp7qskfuysqgjpz3dkz56p4ghug2s5fd25z0lsk4r786", amount:	123202791914n},
+{address: "addr1q8s307aqkw08yd3fge2dmwanay24w0kjuwwcejh46k80ry4mzdn4aqplphvjakd524g8leur0a9pmx67m0rfkdjh2hgqa8f9hj", amount:	13679707101n},
+{address: "addr1q8sv63q03nftlyy4zr5rwpvacgfyqrejkd3h9ee7drcw8yrcrgr07rj7pj653l9eycu24vejfuesqxraagyzzl5azq0s9k5rk0", amount:	22806630835n},
+{address: "addr1q8tnec4kye3qta49z3cchhsuur5dcs0a348fslntrlngmd032y3zscrjet73jy794up2wz5npk8u5uesqjxdd39px2tsg4numw", amount:	31933554570n},
+{address: "addr1q8w6803pkfq75gcxhuh8y7cw4hck3xmwcrdmh220wc9mugdhvz05ythnfkeqzz5mj23a5vrakhq39nvhemsrsfdxv3qqu0ept5", amount:	281383059n},
+{address: "addr1q8x9zdc2exqsfwl6hs47wg4q3vu3a45kdhsfjyrkj00w373fhc6rk4msaduak6qpuxkx2spt73cxzlf7azetyfj42xzq3lh760", amount:	308763830n},
+{address: "addr1q8xsgpsu6l4jpedvclnrrvkgk6ja5m4g2ay0pcq252984ff2lkd47ckys4fvny8npdvf62r063n4z3jh6l0yhxxd47ws3pxf64", amount:	4552783366n},
+{address: "addr1q8xx75kwqu4q2swa0pdyx60p6kc4ppuha5cd4uw3xrehrvgr6txz6w9fzwg54pnepv3ngavg2avm4zrsrq7mkmt33flqjaaxpw", amount:	600825389n},
+{address: "addr1q8y3xd5s025gucuvu2qq2gr2lze2cuc7nl3qe4zk9qmjk40xd34q6rvscs54lu9ny8nqvnlsq8qunswp823unqyp7vhqppghdf", amount:	1370316329n},
+{address: "addr1q8yw3akycfqu3clq3pzq3rds6nyyudkl6gdewyqntqy869jtcafvcp84pmtmt83ajnqa24w4fzkxemhm2hu67dx90xlq8flrl6", amount:	365066270876n},
+{address: "addr1q8z2ls72qkss04nkq7t0mh47vjha0qdtvlp9mxsfmwzammut62lmyn9rmsj925vtaagtzk64tg42h9y4lx5rp8fafh7sy4y52j", amount:	9116245234n},
+{address: "addr1q8z90tys5yr38pqdf47c707d8cs5xj0dtvr7c26hmpc3zf5d7p3pg2ke4k9et6vhl9kappfy4tjf3q9y3sa5rcz6j99sa8pruc", amount:	410700889548n},
+{address: "addr1q8z9q6fxrgzdfy3ygd8ntzkjk82rjrd86pnajpyws39mqtrpxszs7xqw2rye52ng9ukms0v9vnxw7qkhk6z435wh4m8qzpch97", amount:	136893177515n},
+{address: "addr1q90t27an2fa7ac64uqvw3378f3c3yq3fx3kw0mt5c4me658mgejrgvcyx6svteqjgz95evjdufzweyhtm8dqzqqsjw7q49fws9", amount:	9116245234n},
+{address: "addr1q94067vs37nsx5l6saxgrdk0m2hat3eghz4fh0nctphrdmm3jdnte9vun5uheurksu90vsqksne3kujyzs9yqdtv059s9vxtfs", amount:	7290860487n},
+{address: "addr1q94l45jfqg6q7s3hq96f8005fyrpxdp6rshs9da9kn6wxdmhevarwv3mmu5wlgqgd7a6a4d6gypvgx54slrflw9w4w8swzv45e", amount:	9116245234n},
+{address: "addr1q95kss658meqvwj6cp2avwek4yecw6zdctwx2v3jqkfuexz75uhzj4ns5eq4k5rlgztsavwcea9dk3vsa4wrmm9uyexq3m5eve", amount:	527810000n},
+{address: "addr1q96dg3e2tpyayyqg3zvmc9ntrsnf4vhw49ssfhrwfvemhqakzl7xeq93s7ehkd9p8ts55h6676zsuerg0tlc377wgwkqpeuqvh", amount:	902013873n},
+{address: "addr1q96uyhvvvgp56ytazs2uggzv0luwf54qg76u4fe8eq3qchpcrz7qcygj6hajp7dlptq5khry47s2clg5qv7r73tnvj9q027n7h", amount:	9116245234n},
+{address: "addr1q96xnp9gjkx9lktetvavwef57czlpauk2jvrmlqhtvuu0slfa29tp7kgf3yc936eeyy4g3nc06rpndf239k2hhmmjd5s05ta6q", amount:	929394644n},
+{address: "addr1q9780gspcmg9lgtfjzrxzuzwp732n656wezul9d3k9gqp3ffn00sfy9r7yzds3xaq43aj37wj9gsudq9xtq9773rxavsh489lk", amount:	4552783366n},
+{address: "addr1q97dw9re65x4ylurx2a2k54r7nlcyxrz6sdhmm72wqwr2z63vse2q9mhmchn24hruu873q9p3r3muyte7plqcxwnzrjqwpy53l", amount:	171859974n},
+{address: "addr1q97xn05x7qgag6e45mvpsa2mkdwcl4cgzwcs6477eg4xlrtl57ntcc07yqegwymxl4ll54fcjs3z6r8m9c3v9ahp43wsv2k5w2", amount:	217494593n},
+{address: "addr1q98naqu3n2ya6457ga6jgksxt7n2h07ejggza4jmvrwqe9hckrhzhrr0xcdmzedaj52v076q353kjtgw5d5534gsl6yqzpxpza", amount:	182527796188n},
+{address: "addr1q992ytchgze8k73m6uyu3mkxjtz0frlx0xqk5xjtpefgmdphy5dulh5vesekw0e06075gmkhkrvzqh4runlk4tj3tu3sc7jdan", amount:	3640090993n},
+{address: "addr1q9a74nhe4u3avcreent06h90cya6kzkyfm0y2fg4dl30sg5p8g2hspefrgcxd96t5k9vlf6e7xs824q8jd9g9ayv327snu97vx", amount:	7290860487n},
+{address: "addr1q9ac9653uqvtcdnr7vs0n857zruxvap4u724eaxf8yle4kx6mdls87cmnq9cekast9d6fxz0tyx50q27cp6pyd5qldqq6ekh9s", amount:	445667686n},
+{address: "addr1q9ajsxz33wjczpfvas06cy70a8342h02jjvgtc9rfv5epmzxeum2xknl0zkvac8seaacnw02n8dd9p27mpxlrwfv6y4squrh4l", amount:	66615864760n},
+{address: "addr1q9ctumn63a7tryhrtxa7qz2rfj0krwgl6zq7fp39frszzl47a0zd5mx8c7hff59kuvhfd6rv0k7yxdure5tz504garqskylq3m", amount:	4552783366n},
+{address: "addr1q9dfv3dj9vesxn3rem2fu65tzcpnksrp097nm2ypyvz7s0jevxenx9czdhhsqla9rhhtn3pknu8s8zrsptvph2nke69svq8j9a", amount:	7469766930n},
+{address: "addr1q9eg3f0ev8efum3th2la3hefxvf8tege9a84p6myawzs8c04cpmfc5etzwhyafqzzp44849caz03hm4f0tnw85m69pvsxr4k0j", amount:	45623940171n},
+{address: "addr1q9eucdmpy6n9vvpvzc607eyaae7cxykdwuuc73ewlkhfhaaua3zt5vmjgcem7hzm83f0gp7zcd995h9u0j9aty4v5dzqc3yudq", amount:	902013873n},
+{address: "addr1q9ezfg9mh9kyxclas3et6rfxusdt0f9shleh4x8zkmvjjkfhyl687wwrjl0khy8v8tjwvsjgtaa5nc5vf56tpfsqn8gqv3qjhp", amount:	4552783366n},
+{address: "addr1q9f9ky5y26nsweyvys8368ht06t90tyrgy0z5xhpnegjcnq323ejp0zuekkn7jrv8kqhgj48px97rlvcad7yv7yg3f0s2gk3f5", amount:	4005167942n},
+{address: "addr1q9fclp8t6zfu95r5lyqvqapu4c32x9skup239xl3659an8l5kuw02umtw5lqctygmsfmd0u4ecmd34jl0a6m2y089vpqknwyx7", amount:	45623940171n},
+{address: "addr1q9gj7sjuakh9cy23x92jgf5xu5pekanv0tnes52mdz3kfeuafu7gj07t99548z57vg8xlawkeqt647d9tph6kjmnc4vsgpgtn4", amount:	3640090993n},
+{address: "addr1q9hzt03nqt3fkq4pd6xklvlfsltpr36v62hq22g89qnh0c0et9nl838eusf0lzx0zuxkl5j3rj79vfz3dxuv8sj95xgs9anrvf", amount:	902013873n},
+{address: "addr1q9jdwufw94ljvz0g092q5av4w0fzy9jdweq4zkxmsqaq4ed95wvdlcg2kqvyek25as2vlqdmrqaed9s3utzz3rwav9qs9xexvq", amount:	1002410034n},
+{address: "addr1q9kd3rvyl440x3yl6j3cat28udrxfw78xx48tq0htgqazx87y4rz59ac24eq3d2q92mzsdgkh99d7hjted9t559falwsv79snd", amount:	730143220252n},
+{address: "addr1q9kpanzgj6c3s8jp4rcg4n5sedejxjwxzpae66nzd4ecunxuzgmmzxah665vug73aj2lrwrzrfp5ss0r75wrk2skf65sxjh36m", amount:	628206161n},
+{address: "addr1q9kqk7wyrnqaz8cewg4ssyfrwmq7zmmulzvmqz8acksntecp39v4hwsyqe0daxu4cyljdyz4svu0f59s4w07ua0kkansru3r47", amount:	1084552347n},
+{address: "addr1q9kucukjn8yfxrltak69h8w492mfgvrmxdky6znhdpyjp3jta6ymk9046a3ec75e7h37gnefcwpg0sa33hgkk36yt4psz6xmpk", amount:	3357156357n},
+{address: "addr1q9m9s22jj4ayuf8spvtru8mhqzt0vejtmen895v9yedarq7vje0glxpx98pr9m9ck4jwg7r5f8d4gv3d6574fz2c8vzsyuxrdc", amount:	902013873n},
+{address: "addr1q9mat9unkl430cn3m0lmz34y73egxnqgkxnzuwh3au28wlhkeylf5d5plra493rzgzqdt0q7k9whzz7wmajdr945y8tq4k5e65", amount:	136893177515n},
+{address: "addr1q9n3exa0mywsc0dxcej9rtnklxtn4crv0km7ftyveqdy2rcnsqnp8mrcn72yhd2ghzdxrgyzqclwypywj72x88umsv6ql3xaq5", amount:	7272606639n},
+{address: "addr1q9n6zdlgwy7uwwn3qaes2rrf8v2svrgqp9sslw0jw0nx884yc3ux6jjhhwj3f7fxrjjgvkvk6cuxwscgxme2fk7jkw8s74345c", amount:	91258558843n},
+{address: "addr1q9nnrcg0jtaphghs5e8pdjmq2puq23qsq767hg29z7waaqdxj6jc9u2cl49ygql2sharsa6wumc9039fgwm0agqajpzq8km7es", amount:	456335508220n},
+{address: "addr1q9nsd0stv3llw42nrgz9qcm8er4nmwugdtd4rre8pdlekk8pclsjx2fsxl5as44xdxc5m86zj7p0fw2k950xxdz68n9qflm5ny", amount:	109512406312n},
+{address: "addr1q9p0cpt66j0j3xweml8yu7heq97lujmm8c499sk6uqzptvz77u73llkas39raeh7vt8z658cucfrczu4fxzhhrtclkcqmvuf2z", amount:	223598952992n},
+{address: "addr1q9p5nftryp3hm94qsjry6yc4wgxfy0f897gnmlzdyhqmfw7n263z2k7r4uyaflq2shtflgdfuvvzhg3aukh8wf4nhpvq6njvla", amount:	10941629981n},
+{address: "addr1q9q4xcvzwpcl8pv4h2nf5uvkzzg885a262fsm0m6npwd49ww4pvldgauez046k5754z7jrnhwwpuwz3xc02djvzq2n8ql32h65", amount:	2271052433n},
+{address: "addr1q9qasx8rs7gzdqdzk0jnfvu8ay06vgy8k425ghd2dyfepqczu34uxlanqud2ttp6xr3v4v3rnsaczzg03v0c576yqg8sf4lr7j", amount:	4552783366n},
+{address: "addr1q9qkq9kylqge94cwktwa3qmrxexx8uxxkc62n2e3lkmgsr88w4mdc6fumn4d6kqafthmanwwujr46m8dqqd6ch89zu8qzddypz", amount:	22806630835n},
+{address: "addr1q9qzxyzhh3vfldckmz52tavgv9c88tmf8ptg9j90gxf3utxjjshlna7vvmgm8puwx9qg6wwyyyfcsc40t3t0uugczqaqurr5mk", amount:	454794610n},
+{address: "addr1q9r6eqdvx05dyut8jnhqdgm0w3xc0gla9dufv2jdr70adntvmj4hct6zp97yy4j8ve965g3n078jk5vxql2yyejy4wjs045ra9", amount:	54750863906n},
+{address: "addr1q9tycal0wxzpt43rgtfz440nhsz6yswvy7dwwuqlfvt4qptn6nagztcqxj5mxkhshcrx8f6q8hve7qfjhhxkgyqz2hcsphtr60", amount:	902013873n},
+{address: "addr1q9ukpfp78yvfn4xsjferqngmcaap6fgck6yt88y35ptxsl7v4vqpkz37xujwx6py6g8usmmanym5vxhqg4zppp64yynq8xxqdj", amount:	856379254n},
+{address: "addr1q9ur5dhmcwwfl8tntynf0gu8fp3vz30uwkklwptpl7j6kdnhgvfp9cpj4k459vqcc4pm3vlfa2x9shfjw38qsyfp0yyq8ffads", amount:	491302305n},
+{address: "addr1q9ux4sm686edj4a5e558ceycg2jddg7dkldulap4zeg0l0jhelw4l8r8nykc2m520jw737a74mcly6x4m2ll993slv5sg27zgm", amount:	445667686n},
+{address: "addr1q9v54s6k5lwfsftsxll703lhjrrnq5drtcqcmv7x597rrg6lwy8e5kdd625nx347u4xm479zw6nev2jgwqwks79myg5sf8tdvu", amount:	9116245234n},
+{address: "addr1q9vap9yjqvulta33qkkzkhuqt36sgkkfszpcz2dzy6zm82eecx3th0frr3234e5l5fstre6667pssjr202h7w3qxkr2svtsr2h", amount:	993283110n},
+{address: "addr1q9vj6uq99xv6wxaadvtnxlh3u57tkxk546w7g6tk067g2rfwe6pt3gffu87y700s0rmfff5gq9vl7gxh26eyn6v3cvcsaurxcg", amount:	12776141651n},
+{address: "addr1q9w5arttutx7rpugj04var9ptv82z5eh7e3gg03tlj70ulte3mrpd2d4p2lark3dqwrvf56uzqqz6ghutfrhy6922pqqzgqp73", amount:	228162414860n},
+{address: "addr1q9wggh6pdc8w5g5ka0s7sctp27yslj9ss8zj0peqpx67v7gt0rnz95cmrzgn7n6ehzlwuzack0h4wzeftljd8pqq20dqpvt37c", amount:	191654719922n},
+{address: "addr1q9xhc4cx5yld6ftjmp65nkax2yguetgcc73d8jpkava028vjsvyg6wfv63k3ypxkx2knqn7mzr2l7ankqy8dxwk9skfqrj79v6", amount:	44083042n},
+{address: "addr1q9ynxme7c0tcmmvgk2tjuv63aw7zk9tk6yqkaqd48ulhkyl5f6v47dp5rc7286z5f57339d0c79khw4y3lwxzm8ywkzs02spk6", amount:	456335508220n},
+{address: "addr1q9yz4tfuncgn3u0vp7umcgtggrp2rtxctyt2d0avkt8mwz9plqg4l5kn5d78lv3zefsyy3r3wk79f6r4xu9gea0z56es922302", amount:	454794610n},
+{address: "addr1qx0kn8trahpgkx2p25vzc2ay9l077r3jds0trxzqumx4d9eadfz9wa853k0p6f3nz3rfvg4gy3a7aq3pz7h39n0d5q5sh5ugju", amount:	16189611128n},
+{address: "addr1qx2tgnahntcw0sr8jl4z75e8reykpcz8x23rczjnndxffwxg4zq8gpn632xq3fy740hwnc45u70lla7xmwdzeqaxtvsshm98mn", amount:	755983093n},
+{address: "addr1qx498sta8rh85rz58nxxjryn6gr8avwn8ewxtjsr69laa5n48zvgv03gacuwkwjdcuwdfypkgvvq4upu69kdjftl429se6u4du", amount:	27370092702n},
+{address: "addr1qx4gtwggsvskytclu28yxjczzxq9683euzh9gvqxam33s8hlruntcxr9r8yum65c6ra9pkgh9jqcdxjhxgj932sswvgqxwwpmc", amount:	27370092702n},
+{address: "addr1qx5gv2ww7ah2lcza8q5nc04vpdzkf79lv48ygydjgw5llwhdzp0sq7wz248gsh7exl8kytfmvllm3fmt97c0av80q24s2c508a", amount:	13679707101n},
+{address: "addr1qx5lr5aay99l57r997z3shncwhknwr3dzuv2cee29mnenj7hqkaj26zjn48gmupw7rs334cl95rld04d9uq649zxfhqsgetclw", amount:	536936923n},
+{address: "addr1qx65yrdn25y7cp0crv9puvptxh5fc6r7tahcjyuxvjalxu7dndwv7fvrlef4zaefr4wan8su3vtg007z0kel63j5e0zs8gmpmm", amount:	9116245234n},
+{address: "addr1qx6erusmq0tn0a2s0rkuvfgkygnhfclnxrasplhatl5c0rlx62562hf3nj8zgul5r7e3uh59wd3kee8e7yt557v6j98sz2cn2n", amount:	1358360059n},
+{address: "addr1qx7f3rd9ucw963qqtqqpy4h3lehsrxlycclf9ayu3pkmv3f5auj6gxyjpfzhxg03a4xr9fdwha03dgdjf6k2rk35cjcquuyjp8", amount:	136893177515n},
+{address: "addr1qx8ldurkvfw26cm8hhyp7nphjtpw5tqzccyjs2d46d8dtul4dq9rn7aa8c4k9lnr3q6gz5w4sqg487e0k9546enf0axq3tv3rq", amount:	37409708810n},
+{address: "addr1qx95t7nvm9qeecdvwudt4j2azp3xmj08g20x6gaqfu4tlxxwasadu8nc86ppfrhxnse0qemhnavpw8rs4eerklv3m9rsptetnl", amount:	9116245234n},
+{address: "addr1qx9j7nuszkepwlda9r4slscvacecxr0zsh06cck743geyz907y259g8eu7g5h23d0nsvdcpdcnermhzfpvu8at9dh68qssq7hf", amount:	31933554570n},
+{address: "addr1qx9mmfjtglz0h6805wv0q48n0ur669pud8ssmlhxfcga37upsvddpa3cenycp72lxh4znpscee4hq6966dvzcrxgvxgqada20e", amount:	9116245234n},
+{address: "addr1qxc4qfcjkccn4pcthdzuc4qkl6pm3w030m5huq2m3pceuswlkdfsx5wetnytejj6t0aq57tvyxp09nlsktf8ccmdvs0qzwarwj", amount:	4552783366n},
+{address: "addr1qxclmq6ldtmytquzngc3mf04ugtu794e0fjvwahm6an4rmekjl8uhquh8sthrwfzy0tn3pvh6lxzhdzldjqa6xc088sq07ja3u", amount:	9116245234n},
+{address: "addr1qxec2ar6fmmc7966ujn30ff9j789nqeedtlke09u660dn26k836tfa6q5ftq8kkhw6fwm0yec9x8nd9fmmp4urn49x2qnavrjk", amount:	45623940171n},
+{address: "addr1qxfhpyl3hx3x8xqv9efdsqwlmfc4reyjgl4vytat4s0aruh9xm3zgtjm33n669n748m3yyvqfryxwsumy8txdassdc7s069mlj", amount:	273797033532n},
+]
+
+const recipients2: {address: string, amount: bigint}[] = [
+{address: "addr1qxfqhnhlrn86qxcdhgk22s7j0gkcmxwd50mz3gmshwqv058w07xmtkprfvkxck0kk7r5rgj7qum6h9t46u94tqj450vstza625", amount:	9116245234n},
+{address: "addr1qxgacf5j2g3sq4t4u4h6u0luuyepxqvvpteags6jjwc872cuhf928hj0hug9t0mnd7mppk74z84xv2zyvea9u08rgqasqtcvsu", amount:	456335508220n},
+{address: "addr1qxggmtfacwzz6z0fda052f6f773eer5qmps5ywln332njjk8l2tlrlc2r03hsqvjexmjur0e9q46r9ngww598w49d56s38w0fy", amount:	902013873n},
+{address: "addr1qxgxhndlmxt7wef7wrsrq9mselwk6ap7perd7eezaz26pyg5tjvmssg3ppadqy7rmrcvl2uqhm8c6rdl44yvlp33hcqquzzsgp", amount:	902013873n},
+{address: "addr1qxhzr4545jau66q55pkypmtyrrp3fe5ucnz2kzp9d9ksnwrsxfk6rvced60w4h629n75rs2wsfpyg5yjuxjc3rvd0adqc8cpl0", amount:	36497016437n},
+{address: "addr1qxj4wf26r576fpq7kfu2etfktgpyl97fcur75g3lwyp9rn4l6uatmqg64nlylzrcd4j7mks8wedukxf4qceefr2l6zeqrn3666", amount:	4041675637n},
+{address: "addr1qxj56kae7nn34y32vgqw4t34227gajsfmrmg0qehngmaq327wvmwremrp0qctd8tehjep07a6f6waryv4l26m3yda4usk4uqpq", amount:	9116245234n},
+{address: "addr1qxjz7amj3cvkenjv3wud8l32z4lg3yegddqe55f5eay2mrcssygrm44e0dak2pmeq87vt5xddd57lwunqs32f9e5zk9sqk2nyc", amount:	961338877n},
+{address: "addr1qxkapwhx8a90k0uh5gnqrkcp6l3tp8tkr0z3ll5artucacplde4fs5kpjjqvycf3kgv0ktm8af9uxtjw4v9tax296rzqkkt4q9", amount:	13679707101n},
+{address: "addr1qxknxzkwmdavsslkurvcmq8l829y3h83wveuyrzffl9alav6sevdf8q9u3fxgw7fdtvnx6u3qagyl6ne2mjmnv9n9ursffn4gp", amount:	902013873n},
+{address: "addr1qxnhqelhztfjfvat0zu36qgj5f2wak6yczqrqn68r9dlh6mk4s7nd6xtnfqfeun40xmlkwd6na7lkscx6426g8fuf8eswgkll4", amount:	20981246088n},
+{address: "addr1qxnjmrtr7348lffpdus8ddvfk92pj0yj8mqt8je4d8nucnn7405mkk53hff3lcrjvqkas8wy04h7hxjj8m87z0ty4ddqnvwz92", amount:	4552783366n},
+{address: "addr1qxp7n69kf70xw83ph6dzlu5d3cd4ugjwq2dy7h80zy8zufexkf2mqkahmx5zz0vdxr60v3uj7v9aqdpy0rg5x30462gs7vtq2p", amount:	13679707101n},
+{address: "addr1qxq2qjc3vyhnqxwrxsjef4a6n5jkxah0fewwea2vvfkp4fwyvfzg0gchfs9mywm0d3j6dtfzdajhggpc50nhur9mvjuqegpnfz", amount:	4169452570n},
+{address: "addr1qxqpwtlcrezr6zgqg2u9aweyddw0eq0yqxn9zzyw3hj79hf7fl2n2tq298ar7w3zychfxntytm26qdv50g2cxgy6tceqq6jmq6", amount:	7290860487n},
+{address: "addr1qxqzmjxes8atycjuapweftt6n6rhzrzkvqtv3c4snmqwxpn6kaaqalamh0d6d4q6v2gx82ztv74ns3y4sng8x77h5w9qre5u70", amount:	42885863051n},
+{address: "addr1qxrjvc9srdg6dcerz4vr2rzh2y2r2vz0dag4lucspt0syuvllwq0673j9wtpxtq2dhhwvg764fdyr4ae0vtj0gftrvhq5g8f07", amount:	1632167771n},
+{address: "addr1qxs59sa2nkqqdsnlacn4m5ld0c738c4eexcj2ex3fy9tphtehktx4u26mu0w7lpjv3ra8la93zn2y0443t90xyyy6kfshqa50g", amount:	12767014727n},
+{address: "addr1qxs7mnwkvfm3rdftgzjurzlem6e342puxrqz62zxy8vz37me0wknqghv2syzhqvwmzu8fl6ac4nulvgxrkq7xac9p9ssh2pqke", amount:	3640090993n},
+{address: "addr1qxskv7lq9yvvtrvz24zylelph5ltfddmv7lf6rsde69ckvw350r64hxqcqaddyf3jxdhlr7q96d6x98crgs8xusdswxskestjy", amount:	82131635109n},
+{address: "addr1qxsn7cfwgzgzer8d6cwsk376lw5se5jwr98ltamc5jd0llryz5j2m2w8fzgh36g2ldsasxs03whywgcqtqfdc9d520fse5ypml", amount:	902013873n},
+{address: "addr1qxt48dv8e6w5czxvxltqkjlumewtp29e4sxp9x6vnft7rac4vshnvlv4lfldj2hlzar4hv3dxe0qsv6e9m63qs3u2ltsksh5mm", amount:	9116245234n},
+{address: "addr1qxt7pnhcljd4qz364tkvsfa8ep9uqq92xfxgx5s20ptfdlq40wttq0dd9yuj3hrrm5u4zjuchxs0ant2gdkqxpl2nwtsw9ae3e", amount:	4552783366n},
+{address: "addr1qxttazyhw2w2m8eedugmm4y56anxq0g0wav4awv0xk5nvmawfun4yeafl9tujm0kuu9e3g84rl8h46am7trh26strmns4zwnmm", amount:	38322401184n},
+{address: "addr1qxu62ruzfxg9warz23czkv2djj86n7vcw6clztmqncr8z6rwvxrp5smwuryt6ufgvg0cf8u4y587cxctwhtpchjmly8qqdqwkx", amount:	1358360059n},
+{address: "addr1qxvd8hx3zcpkltrzu3zqgugryj3g6f0ea5ycseaglccavtfpjrj0pluc5n6v5w649khgv7xzcnrgry9syar4ju2g4xhs652yay", amount:	8048395157n},
+{address: "addr1qxw2x9jl5p9wxwxxz8zl6t06fczvszslzryug5m8vkg3zfjl2tm8xhpfz57ef5zl8w6ke7nw70cxpyjy5l43cccy0zcqn2gthz", amount:	9116245234n},
+{address: "addr1qxwdprx8dtnflagcsyd03599r2ydgwjvv4aqcp8fyfxv3j7glwsdystxnu55twytcqpeds6jm0pm3ye6txhe9qcpn6lsnn4lz2", amount:	52925479159n},
+{address: "addr1qxx6q7e5nj03kp3997xa2m5vhcluzuk6qx6uy68x6nmjeg7n6zag65kcmmh4f0fxzkq896ycgmlyspsnph924yzc6vxs2rn4ks", amount:	45623940171n},
+{address: "addr1qxxndn5tjnl8r88saml7nw5alx0xf7gzky530uzp9z0ld6wuz3qjl7gt9ujpa209ea5ht5zcq7wy69yfmdg7gjmy6ejsknuhw6", amount:	1997244721n},
+{address: "addr1qxxyuzzj2t32q642jzrnl9mxp9t3tedzsjj4pq5vjktk8vm0cj95zrgdmn0aks77vakz2x580sxlsatmjqhgczvdx3fqnmpmq5", amount:	45623940171n},
+{address: "addr1qxxztufnk6gml3xhc390jkyzgmmkvcrc3e8s9sj4twv0msmhrtnlt5yn4c7teywqnphe03rpfvaw3vzzxtqhlvq0kcuq0pdut7", amount:	902013873n},
+{address: "addr1qxyhfdaygneh95rlzk4ucrkdju5708u7r94h9g9m8lz5zrxgvm4sr8luwzn48274f2ssvfz0dku9puqn947yudhmkpds32z4yn", amount:	3640090993n},
+{address: "addr1qxys73l3hryn8fc2ph0vpq0d202spw33tadhycczsywtvtv3628la2lcg3lqy85p5je4yrgza2kr0aus4sszeqxaudus7n9958", amount:	9116245234n},
+{address: "addr1qxz9zrgkqqgj2zt5uplak4h7csal0pup02lpmxz87acgejt42wwpwshwrck2c8ggtvdxwsk5g24pfd99vl5v7x0kgm2sy875gu", amount:	8659899047n},
+{address: "addr1qxzjvk4tf373nnalgd7t4wevfq3yy6yl3nnckx04mha428fe4ksu0dhsuyqlfu7jg82lkjxy4d34lzwnfawdtxqdnmnqnpx9yj", amount:	12767014727n},
+{address: "addr1qxzt4sge5jz2h7uwq7zangz5c9zn9vynqeqwz3auwsps7l2ard8yjkzw6pay9xfgcpzq78zgq33a79pla2txxv72zwsq88k60k", amount:	2271052433n},
+{address: "addr1qy0eh2f0h04yjpgkrp6jcu2arcpqpej2l49uywkrrqhakd3x5vulhgrj8r2p3mh3z882r08myy65st9xxjjmse76k89s6z8mmr", amount:	2179783195n},
+{address: "addr1qy226p8sd9dy0kw4du5js2fe6q37w24azpk4ftcg75es63curz5utw9qe9f0chs8ch7l3vwehauhhy9d00z68a43m0dq4yg3vz", amount:	27370092702n},
+{address: "addr1qy3uzc5qrf0hyd9g6rcxuans72fhrsp33l5zz230ldz2m2yxuq4q85uwjz2zvm4lge686xurfp8jlhwrqgp0z8ufhtls9nrd9x", amount:	22806630835n},
+{address: "addr1qy3v8avl8zxt8vskc7ps90u6jmhfrxc2n79298hny0lf5sndfa45r3jk69587qcg6vshd45pek4f4fk6sp6p8jev2d0q86cx9a", amount:	445667686n},
+{address: "addr1qy4v7lehlcrav7cy7ra3n5x8h4gw726dagrzducts2f3t2sfzedd8ey8us7w4xy2kavrxesx440rnad4ls4re64e0vtqyarafr", amount:	5514614011n},
+{address: "addr1qy4zjvjwrrth57jjnvwl5f28f2e6tuvhpxqr7rr9apwe2ac984pl22yf629l9y03g75j9cg30zy72crxazy2dxag6mgq7dhr7k", amount:	454794610n},
+{address: "addr1qy5zaqqlgnquudv4ya99p5ekllgzwswhnh9kqner8e8hglapwyksplpd4km4kaps7mph79mqsanx6k26rmaxfq23a4zst87emg", amount:	270146264038n},
+{address: "addr1qy62zezzd8smmwg0vhjmqye37hwmj3slexr0shgcumjlfu8qcr3t3vtnguzf54cv0vdu0ytpnf863k5yzjfp932m6lysswqsfx", amount:	536936923n},
+{address: "addr1qy63w67ljecyw502k3llev9ancwx6hz0mfr0vtmshhm7703gcxen7uk0plpucehpn8a2mrztt7mp3nrq26p700j65ehqsrxt97", amount:	9116245234n},
+{address: "addr1qy69j04xrw0n9h4y43epym6f4yxfthj4u26e02ys9g9983frcpvjjhygw7xqq24ukqmz9pp65tnfjtsmms4th3a9m5csm2wjax", amount:	2727398620n},
+{address: "addr1qy6pv0jajqxz6rz9cpj7dcd0hf4qvcfsrtq8le8zrm585cktk52ultjydwgt2j2udardcfvdqamjrj9xrj9xy3lym2wqs6xl4v", amount:	45623940171n},
+{address: "addr1qy82sdghkyyyvkz6razsnu3vjs6suwgfw9c8hnqf7693tt9ve8fq4ttquzatzgxzuxkjlhmpapd8gutw8wn56h2cmpusqz4zky", amount:	13679707101n},
+{address: "addr1qy96tn2xqnl75q80533yx36a0tvzyvn6a5eezfdzfj38hglms5f4mggmmasr8l7356kc7mgh9czwu8ma5ypwxxfk9vgsvdj0u4", amount:	582571542n},
+{address: "addr1qy98kcrzr054q9p995vv2mh4n4d79evckcyxpq5725urwk9t43gu5xp8pxhn57q70rseerq4s8vnwcv9v4am3mjd4rlq3m098x", amount:	902013873n},
+{address: "addr1qy9nx39kgyfx66epetsdxa7jy0mppu0p3eypjg375h4mlemfv87w40pyrdptgpj6fv6jepudq8q4wk8rqyndr84g04xqa8re0m", amount:	4552783366n},
+{address: "addr1qycexgtapva7t4kvr9wszqhuc04ckfj7wtuvl3zvd57045l7lnynmqz24cfzjhu7qw40qjraynyeg9vkttp7fmp98lgs3pke45", amount:	912681694941n},
+{address: "addr1qycffh64ehy99pspnjd40hvdwu3q7arh6d28zg4a28r9damgkrq2m5jsxvsfver4gzg66ahs7zjhr5vueqr26jf2u6us42fwkl", amount:	9116245234n},
+{address: "addr1qycksngxqlvaymcrwr986p7ped4emqpxxr2fuwr88342vdqwy5nzm5eyhv3cy3thf9vkpgxnqduptju7letxd0yqzrks6n2las", amount:	4525402595n},
+{address: "addr1qycznu8ed8mdqv5x9jlhff0m5ya6kkw7zcj86qpwu7nejwc45hwxeyz3vu3az0phr77frc7nzpt2wlm4g2ryr9h3e9fs538llw", amount:	73004711375n},
+{address: "addr1qyd8arlgf7qrf9yjp5cnkt3u7aglh2q0hz75dcglvwwkpalet9nl838eusf0lzx0zuxkl5j3rj79vfz3dxuv8sj95xgsty6293", amount:	902013873n},
+{address: "addr1qyda0tv8s634eq42vx6clvq7wtvn80rgsvkx9na88ejzznxwn72czshpsqgy3efllq0lfgh6q2p8dsa2zgwvv32j34kq6tg92w", amount:	11854322354n},
+{address: "addr1qye93uefq8r6ezk0kzq443u9zht7ylu5nelvw8eracd200ylzvhpxn9c4g2fyxe5rlmn6z5qmm3dtjqfjn2vvy58l88szlpjw4", amount:	912681694941n},
+{address: "addr1qyevzx7v5vqxdwlxrgf7kvd0zh5wqrnewnqnqjuu6qpjml5vxyjrlj8aseg5x3spzw5jas39ejq3r6kftc3msytxctqq2a83y5", amount:	9116245234n},
+{address: "addr1qyf90nr693snk2ey8lnrwa8c79h3ts049pzqg8aajr8qd939trwtu0aq4ez8tz2eyl7az5wg9xu3a2dm9ytudh4z5qmspcdha4", amount:	9116245234n},
+{address: "addr1qyflu2fsufnzs7d3g5uvn9uuayp4u6d92walknzy4awyv5d59tqk0fhxexvwfmfeusa5mffgf0r8e08mare8e940az5qvcnaae", amount:	7619429741n},
+{address: "addr1qyfrrvl6h5qnfdfnczt8f0k05l7p7v5zp8axphc92rf52h7rxasurpxajp2jaa68ankz4ka4dgpej0848wlffx0v7s4sqp8asq", amount:	9572591420n},
+{address: "addr1qyg4x05dcjyvflzqcll69jhmps9q3hnz9ct65pu6srnrwedgdz45vya2ch7r7d9rnw7c46z7djn2hmxc87wct7h7pvmq5k6mzc", amount:	173692934013n},
+{address: "addr1qyg6kahw6e48vegc3zpx53m4a53zggam277jsmew5wk240kpqnhzwygkzcd6tr3c438vkjeqyg9vrqxhay0gtef87z7qrumjwk", amount:	2362321670n},
+{address: "addr1qygxulak50rw0axzdcchuunatfx9zejhllzxw3pz8hv8d5kwk9j235q7rrtaks0266e9wmk97wjrw0ngs9w5vgqe0k2q6mudzx", amount:	107687021565n},
+{address: "addr1qyhqf2wnkqv5jxjzsfq0fdamzasqctlm5jqjv8c3udcdrg42j0fpw050qa2xxty8ls6jp4m6z34kujy3y642d8jjj7xs0apmpg", amount:	10941629981n},
+{address: "addr1qyhqxgxk374uyycgcryzs74pgcz87jvugfxk57jkavx2ecertdrx9dshkalwnjzc3873wk4hc5lxj5c5vjj0atnmrnws0ecmkz", amount:	1814706246n},
+{address: "addr1qyk4pyttvrx6vypgwvashyra9anqtmmxez29h3dy38xk6rzhjhtngwum22lncz2xeqyvh2lwjy3xf67thnz28m06qjhsqstepq", amount:	17239207357n},
+{address: "addr1qyknk74khyat98e9jwqgwzsv6993x6smaysqke239hvw5656rv3wfae6cu3p5jc6d9vxqzm6ptz897grkcrl6uvm294sdvc3kv", amount:	2271052433n},
+{address: "addr1qyltccd8zl93x0hvhvl6xqrasvqs5620qgv5rxa2e5vwcy04nqxvqn5crfpd960g48au26yfvsj3feqvxuhqu5jnunaqzqm8qt", amount:	27370092702n},
+{address: "addr1qylvvp0g5rqjkh4y6s7d2zau45hem8fkafezsxx0f6zq329pdht03fg0e6pzf7xmsw2vpsw5a3lnqpa3gjks9rx4q65srawx83", amount:	91258558843n},
+{address: "addr1qyme5adfnza0xe6g53zp9h5nk2ftm6drdjuczx6cttvx29x23wj58lcuw5y6guf7x7nlmyu0pnmc0wng986mzacajknskxmxur", amount:	22259015411n},
+{address: "addr1qymsz3wz9n92hfftuuk2dv0xfk5ag9mjez4eugf4uderyllk9v8kkcevawvq6emcg7eyrnpvehzlrsn0l03g089u792qfws7y0", amount:	564317694n},
+{address: "addr1qynysh5pqyc7ektqpfgfnyqzd09qj6jacqjw6tvjmn5tk57nqcfvnj88vxtvqnxfk9flqma54gzzyn95j50cxz6rtausxgd346", amount:	1358360059n},
+{address: "addr1qyp00fud9lllunfvtrdqde9mz5283uh3tf3mjwj2g5ljdnm5k4nj42ztk8hgfykyxexvrnrwl73npjv2qwd8qepaj4useqdpjv", amount:	1002410034n},
+{address: "addr1qypzsddh0gjad0cqlr9l0er5fcqxtmrh8q6sqgs76nej29pucm4r0p8wespmcumdjr3k32a5p7rncjx3l36pxwh6ukjs34al27", amount:	91258558843n},
+{address: "addr1qyq850ut2q4dgx5xq0wgmn3vv0mvafw8zmt5g5lkdc7h0ywx00eey476832mm2t0l6jy9mxj4a050y398fd4mdsrzy4s5vfqt9", amount:	902013873n},
+{address: "addr1qyqaqzg7t0dkfqnftumt8nnfd3s3qkwvqwa8ysat3fw556n2u92ce7tnqssx0nkpuysld6529ze2ca0r5ng3jnqayuws4y8xcn", amount:	11580514642n},
+{address: "addr1qyqjdy0m36cgvwh2xxgsq8kkgkx2n48jwms5p3v0f34cn7r4dyhhxnckkqah6xlhnzhcdfggk6qdclhd4p9he02v9azqcx6lvz", amount:	30108169823n},
+{address: "addr1qyr6mqcheyx5mw6lzpasfxq79lvss9l9vm5rc7pmtxlx28t9pq5u9j6dalumpr78wngsf49sgeqhmdxswfe07cqdz62qk4zquu", amount:	20524899902n},
+{address: "addr1qyrk6gghu8rxpl5vezu6dvqvxdyrhaugszu3aah7cqvtu5vgupnj0gk07fcjfcxtnndswkpkaex7mxjm86w3q0p8v68spq9l3w", amount:	2727398620n},
+{address: "addr1qyrtc5vy0559rcqjlu0mechxwm7xfkwcyxn82aawqpw27873ekj0kmg2d35cx3utcyq0gaakzmpaulfxnafz0hs0jrkswewjzn", amount:	4552783366n},
+{address: "addr1qyryr9ukxn6duslhhvv6045qgplahq4r73ph75ea3gv34xs7jxdg4hjjgxmhf26js20s2aam7mjajcxsdvnpv24jzxhqyj66ur", amount:	1632167771n},
+{address: "addr1qys0sc4p3ljzq65477jezycxhpxdlg3z8au2qazpd9p7eza5kjtp6upd5x03mwlkajmugtcl06tqrvkuc4zd7kt370aqcsrqgk", amount:	4525402595n},
+{address: "addr1qyulwl5y5qrsaav98vvgllwrl4zrycw5mr6ekqj9563jaheukq5telzpzt8v625a2dcv207fcmelmn306fjn9vsd429sq0j9s9", amount:	7637683589n},
+{address: "addr1qyunu3q833wq2d2zztk0k3wws6um8344el2ackv2y7n4d0xygg5y5hsh6wqhznfm9mwy6mt7rc57zj6nxhel2lwpzxzsx7798d", amount:	4552783366n},
+{address: "addr1qyuzhjp4up40v75yhngjymq5sps79nhvym60qa25678c24fwpdze8thus5mvxgw52nks2rn9c0tc9zmaahy2sk7uajvqfzlmfh", amount:	13679707101n},
+{address: "addr1qyvz2phqqlfqklznz9ua408kq75hxyw040ftd3nfqwqfeq2hs55enw0ysdnklqpseadypr2kv8pcr5q6wqaqk7gvwphq0ze2n4", amount:	902013873n},
+{address: "addr1qywgwnwtrnrep4zhwfgfhmgw04aaswtv5rmja4mqy55kf9hgaw9sxsfdfp065m8697pu5mxsyszq7dyueer9qkhaus6s2wtq0h", amount:	2271052433n},
+{address: "addr1qywspjagffqqmxqk34vv9qhll6c3zqy5wldece6wmnpzrrwuz7jn982jlyc9tlppmp307xcfj4fjsnrhtueflqjamkds8tk3w8", amount:	1814706246n},
+{address: "addr1qywyujyxs8jymdxf5hnkx5yhsmfwvmk3hc3d8acdqc8lj59qnqef2jtj5s3rh89ck38nxrychqdy50ul93wwus4dg89su4q792", amount:	27370092702n},
+{address: "addr1qyxeckne3tvyus63hvf0tmnfk3d8k54q57uykxw4pymh9sswsrk5vs0ffxsc3yd046zvm0fhpr8q9vqwytnxpr9m9s6s50mtxk", amount:	1997244721n},
+{address: "addr1qyxp6tf99u857rqqkfkfnmq4k5m4j3c9heh0mrmfs0p6q5h9yz5p7lrn4pqjx473kvzggm85n086h9degyncu50k6etqw7ffa6", amount:	45623940171n},
+{address: "addr1qyyer336l7y39um4276zn7d4nytc57egn66yn6f5pk5fkftjp822w8t4emdd0n62f07rlsd739n9aw7gl8h2ttvfjxeqjylqfk", amount:	91258558843n},
+{address: "addr1qyzpj7f89x9vxvmjrepwf68nyz8e4pyw0s086kjzwm9u0xt34h2m9ujcp594lmapd0nj8wzfmgc3efgymg6vvpuah8es2l4wmf", amount:	22806630835n},
+{address: "addr1qyzqauknmndgxslu9xzpvazl0qtkf3qcemxy4uk7yutnqad2dta3lu62v7accja3n06f658wes5j7xd6uq36edv340mq3qmwy2", amount:	36497016437n},
+{address: "addr1qyzqmqg48ew6ze589q2hv70c2wy6trc6jqeesdatvv0npd9j9yj3rswcdv00uxhnmpfe4ztdvh46yu8qvwvlsgfv0vmsdxz7a7", amount:	45623940171n},
+]
+
+const blockfrostKey = process.env.BLOCKFROST_KEY
+
+async function main() {
+    if (!blockfrostKey) {
+        throw new Error("BLOCKFROST_KEY not set (hint: create .env file like the .env.example")
+    }
+
+    const network = makeBlockfrostV0Client("mainnet", blockfrostKey)
+
+    const utxoForTokens = await network.getUtxo(parseTxOutputId("9ea6af3b0627575fed13fe76c28beff80a43c7c45b7757b0779cd86941e5ab4a#120"))
+    const utxoForAda = await network.getUtxo(parseTxOutputId("f0b1e9e57863ca5b9c0ae730cf9c752e754e87cabff5188482706dde3c1dca1d#3"))
+
+    const policyId = makeMintingPolicyHash("2da97f55d49be13dabc8450a2eabab0412f3075a03f7519d32d46925")
+    const assetClass = makeAssetClass(policyId, "0014df1050554c5345")
+
+    const b = makeTxBuilder({isMainnet: true})
+
+    //const nativeScript = decodeNativeScript("830302838200581caf3b552d41dd0891bf60c893afbeaab87d1d8cf61fc13e82e4d9ab438200581c58596b05330548a8b06a96e8bf2dc8ccecd72f512bc21ad90c319d0d8200581cf3fa9fd7d0913a9490839bde2c8b6ca164f6f8e450d68e7555bc36e4")
+    //b.attachNativeScript(nativeScript)
+
+    b.spendUnsafe(utxoForTokens)
+    b.spendUnsafe(utxoForAda)
+
+    for (let r of recipients2) {
+        const addr = parseShelleyAddress(r.address);
+        const amount = r.amount
+
+        b.payUnsafe(addr, makeTokenValue(assetClass, amount).value)
+    }
+
+    const changeAddress = makeShelleyAddress("addr1q82vx5jca42vx5n7qpu05vu8r6vxmvgc2nvuknmhnky7vpx0n6h44fq8ujuyu807vll9atjpc8z6zl0pyv6n2neezysq047pyc")
+    //const changeAddress = makeShelleyAddress("addr1xy5u66zysgwq3tu8qmynude57rww06tukq2tqjgv4rve6hewqrearru3df9uh68a0pfudzkes0t2r3zf6trszrt3jrpqgrdan5")
+    b.setMetadataAttribute(674, {"map": [["msg", {"list": ["Pulse Token Airdrop"]}]]})
+
+    const tx = await b.build({
+        changeAddress,
+    })
+
+    console.log(bytesToHex(tx.toCbor()))
+}
+
+main()
